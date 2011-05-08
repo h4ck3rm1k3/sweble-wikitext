@@ -1,0 +1,10 @@
+This code is derived from the sweble project. 
+http://sweble.org/
+
+I have created a branch of my own to publish my changes. My intent is to understand and reuse the grammer and interface described here. 
+
+Maybe we can even use INLINE::Java to embed this in perl.
+
+mike
+
+JamesMichaelDuPont@googlemail.com
