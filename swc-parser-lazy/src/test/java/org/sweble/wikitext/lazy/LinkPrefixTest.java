@@ -1,6 +1,6 @@
 /**
  * Copyright 2011 The Open Source Research Group,
- *                University of Erlangen-Nürnberg
+ *                University of Erlangen-Nuernberg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ public class LinkPrefixTest
 	@Test
 	public void test()
 	{
-		String prefix = "asdfäöüß";
+		String prefix = "asdf";
 		
-		Matcher m = Pattern.compile("(" + "[äöüßa-z]+" + ")$").matcher(
+		Matcher m = Pattern.compile("(" + "[a-z]+" + ")$").matcher(
 				"Hallo Welt, hier kommt ein German Link " + prefix);
 		
 		Assert.assertTrue(m.find());

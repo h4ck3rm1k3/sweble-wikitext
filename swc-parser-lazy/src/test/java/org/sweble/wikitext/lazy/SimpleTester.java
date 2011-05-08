@@ -1,6 +1,6 @@
 /**
  * Copyright 2011 The Open Source Research Group,
- *                University of Erlangen-Nürnberg
+ *                University of Erlangen-Nuernberg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * 
  */
 
 package org.sweble.wikitext.lazy;
@@ -20,7 +21,6 @@ package org.sweble.wikitext.lazy;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -28,6 +28,7 @@ import java.util.Set;
 import joptsimple.OptionException;
 
 import org.apache.commons.io.FileUtils;
+import org.sweble.wikitext.engine.utils.HtmlPrinter;
 import org.sweble.wikitext.lazy.parser.LazyParsedPage;
 import org.sweble.wikitext.lazy.parser.PreprocessorToParserTransformer;
 import org.sweble.wikitext.lazy.preprocessor.LazyPreprocessedPage;
@@ -46,7 +47,7 @@ public class SimpleTester
 {
 	private final Options options = new Options();
 	
-	private String baseDir;
+	//private String baseDir;
 	
 	private String sourceFile;
 	
@@ -74,20 +75,21 @@ public class SimpleTester
 		if (!parseCmdLine(args))
 			return;
 		
-		String filename = baseDir;
-		if (!baseDir.endsWith("/"))
-			filename += "/";
-		filename += sourceFile;
+		String filename = sourceFile;
+//		if (!baseDir.endsWith("/"))
+//			filename += "/";/
+//		filename += sourceFile;
 		
-		URL url = getClass().getResource(filename);
+		/*
+	URL url = getClass().getResource(filename);
 		
 		if (url == null)
 		{
 			System.err.println("Cannot find file for article: `" + filename + "'");
 			return;
 		}
-		
-		File file = new File(url.toURI());
+		*/
+		File file = new File(filename);
 		if (!file.exists())
 		{
 			System.err.println("Cannot find file for article: `" + filename + "'");
@@ -181,12 +183,12 @@ public class SimpleTester
 			FileUtils.writeStringToFile(new File(sourceFile + ".ast"), result);
 		}
 		
-		/*
+		
 		{
 			String result = HtmlPrinter.print(showArticle, sourceFile);
 			FileUtils.writeStringToFile(new File(sourceFile + ".html"), result);
 		}
-		*/
+		
 	}
 	
 	private boolean parseCmdLine(String[] args)
@@ -245,11 +247,11 @@ public class SimpleTester
 			return false;
 		}
 		
-		baseDir = options.value(
+	/*	baseDir = options.value(
 		        "base-dir",
 		        String.class,
-		        "/dropbox");
-		
+		        "/");
+		*/
 		if (options.getFreeArguments().isEmpty())
 		{
 			System.out.println("No sourceFile files given.");

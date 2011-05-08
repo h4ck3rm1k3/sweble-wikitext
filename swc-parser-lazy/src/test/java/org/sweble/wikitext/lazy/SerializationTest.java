@@ -1,6 +1,6 @@
 /**
  * Copyright 2011 The Open Source Research Group,
- *                University of Erlangen-Nürnberg
+ *                University of Erlangen-Nuernberg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
