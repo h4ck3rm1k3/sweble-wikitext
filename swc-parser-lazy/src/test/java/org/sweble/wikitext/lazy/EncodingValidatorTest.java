@@ -1,6 +1,6 @@
 /**
  * Copyright 2011 The Open Source Research Group,
- *                University of Erlangen-Nürnberg
+ *                University of Erlangen-Nuernberg
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ public class EncodingValidatorTest
 		StringBuilder source = new StringBuilder();
 		source.append("Ein einfacher Test-String\n"); // L 0
 		source.append("mit ein paar \uE800 und \r\n"); // L 1:13
-		source.append("natürlich ein paar \uFDEE.\n"); // L 2:19
+		source.append("natuerlich ein paar \uFDEE.\n"); // L 2:19
 		source.append("Aber auch \uDBEF und \uDC80 \r"); // L 3:10, 3:16
-		source.append("dürfen nicht fehlen. Zu guter \n");// L4
+		source.append("duerfen nicht fehlen. Zu guter \n");// L4
 		source.append("Letzt noch ein Wohlklang \u0007."); // L 5:25
 		
 		/* Ruins the test string!
@@ -94,9 +94,9 @@ public class EncodingValidatorTest
 		StringBuilder ref = new StringBuilder();
 		ref.append("Ein einfacher Test-String\n");
 		ref.append("mit ein paar \uE0000\uE001 und \r\n");
-		ref.append("natürlich ein paar \uE0001\uE001.\n");
+		ref.append("natuerlich ein paar \uE0001\uE001.\n");
 		ref.append("Aber auch \uE0002\uE001 und \uE0003\uE001 \r");
-		ref.append("dürfen nicht fehlen. Zu guter \n");
+		ref.append("duerfen nicht fehlen. Zu guter \n");
 		ref.append("Letzt noch ein Wohlklang \uE0004\uE001.");
 		
 		assertEquals(ref.toString(), result);
