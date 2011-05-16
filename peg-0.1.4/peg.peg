@@ -18,7 +18,7 @@
 
 Grammar		<- Spacing Definition+ EndOfFile
 
-Definition	<- Identifier 			{ if (push(beginRule(findRule(yytext)))->rule.expression) fprintf(stderr, "rule '%s' redefined\n", yytext); }
+Definition	<- Identifier 			{ if (push(beginRule(findRule(yytext)))->rule.expression) fprintf(stderr, "rule '%s' redefined on line %\n", yytext); yyerror ("Rule redefined"); }
 		     LEFTARROW Expression	{ Node *e= pop();  Rule_setExpression(pop(), e); } &{ YYACCEPT }
 Expression	<- Sequence (SLASH Sequence	{ Node *f= pop();  push(Alternate_append(pop(), f)); }
 			    )*

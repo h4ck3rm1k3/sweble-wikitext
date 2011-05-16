@@ -335,7 +335,13 @@ YY_ACTION(void) yy_2_Definition(char *yytext, int yyleng)
 YY_ACTION(void) yy_1_Definition(char *yytext, int yyleng)
 {
   yyprintf((stderr, "do yy_1_Definition\n"));
-   if (push(beginRule(findRule(yytext)))->rule.expression) fprintf(stderr, "rule '%s' redefined\n", yytext); ;
+   if (push(beginRule(findRule(yytext)))->rule.expression)
+   {
+    char buff[512];
+    sprintf(buff,  "rule '%s' redefined\n", yytext); 
+    fprintf(stderr, "rule '%s' redefined\n", yytext); 
+    yyerror (buff); 
+    }   ;
 }
 
 YY_RULE(int) yy_EndOfLine()
