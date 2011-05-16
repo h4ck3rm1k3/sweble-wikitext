@@ -3,7 +3,8 @@
 all : mediawiki
 
 mediawiki.c :mediawiki.peg
-	~/experiments/sweble-others/peg-0.1.4/peg -v mediawiki.peg -o  mediawiki.c
+	~/experiments/sweble-others/peg-0.1.4/peg -v mediawiki.peg 
+#-o  mediawiki.c
 
 mediawiki : mediawiki.c
 	g++ mediawiki.c
