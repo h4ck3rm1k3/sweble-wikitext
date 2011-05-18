@@ -1,5 +1,5 @@
 Article1 <-  Redirect? Content Eof
-Article2 <-  {  }  BolBlockContent &Eof  {  }
+#Article2 <-  {  }  BolBlockContent &Eof  {  }
 Content <-  &HasOnlyIncludeContent    OnlyIncludeContent  / ContentStar
 OnlyIncludeContent <- tOnlyIncludeContent 
 tOnlyIncludeContent <-  Ignored OnlyIncludeRepeat* ( KwOnlyIncludeOpen ContentStar )?  {  }
@@ -10,10 +10,10 @@ KwOnlyIncludeOpen <- "<onlyinclude>"
 KwOnlyIncludeClose <- "</onlyinclude>" 
 HasOnlyIncludeContent <-  &{ yyState.isParseForInclusion() }  ( !KwOnlyIncludeOpen  _ )* KwOnlyIncludeOpen  ( !KwOnlyIncludeClose _ )* KwOnlyIncludeClose
 ContentStopperOnlyInclude <-  &{ yyState.isHasOnlyInclude() } KwOnlyIncludeClose
-ContentStringStopper <-    <PrefixOnlyInclude>    ...  / <PrefixPipe>           '|'  / <PrefixEquals>         '='  / <PrefixClosingBraces>  "}}"
+
 TemplateArgumentNamePlus <-  ContentPlus
 TemplateNameStar <-  ContentStar
-Redirect <-  pWsStar '#' keyword_RedirectKeyword pWsStar RedirectLink  {  }
+Redirect <-  pWsStar '#' RedirectKeyword pWsStar RedirectLink  {  }
 RedirectKeyword <-  [Rr][Ee][Dd][Ii][Rr][Ee][Cc][Tt]
 RedirectLink <-  "[[" LinkTargetString RedirectLinkGarbageString? "]]"  {  }
 RedirectLinkGarbageString <-  &'|' ( !"]]" _ )*
@@ -23,22 +23,21 @@ ContentStar <-  ContentAtom*  {  }
 ContentPlus <- ContentAtom+  {  }
 ContentAtom <-  !ContentStopper ContentChoice
 ContentStopper <-  ContentStopperOnlyInclude
-ContentStringStopper20 <-    <PrefixOnlyInclude> '<'                                                                                  / <PrefixXmlElement>  '<'  / <PrefixTemplate>    "{{"  / <PrefixIntLink>     "[["
+
 XmlElement <-  '<'   ( "!--" XmlComment  / '/'   IgnoredClosingTag  /       IgnoredOpeningTag  /       IgnoredElements  /       TagExtension  /       Greater  )
-XmlElement2 <-    "</" XmlElementClose  / '<'  XmlElementOpen  / '<'    {    }
-inlineContentChoice <-    <XmlElement>  &'<'  XmlElement       / <Template>    &"{{" Template         / <IntLink>     &"[[" InternalLink     / <ContentText>       ContentText
+#XmlElement2 <-    "</" XmlElementClose  / '<'  XmlElementOpen  / '<'    {    }
+ContentChoice <-    <XmlElement>  &'<'  XmlElement       / <Template>    &"{{" Template         / <IntLink>     &"[[" InternalLink     / <ContentText>       ContentText
 ContentText <-  ContentString  {  }
 ContentString <-  ( !ContentStringStopper _ )+
-ContentStringStopper10 <-		       ContentStringStopper    <PrefixOnlyInclude>    ...  / <PrefixPipe>           '|'  / <PrefixClosingBraces>  "}}"
 TemplateArgumentValueStar <-  ContentStar
 Text Greater <- !ValidClosingTag  {  }
 XmlComment XmlComment <-    XmlCommentContent "-->"    {    }  / XmlCommentContent Eof    { <-
   ( !"-->" _ )*
-transientIgnoredClosingTag <-  IgnoredTagName IgnoredTagGarbage '>'  {  }
-transientIgnoredOpeningTag <-  IgnoredTagName IgnoredTagGarbage '>'  {  }
+IgnoredClosingTag <-  IgnoredTagName IgnoredTagGarbage '>'  {  }
+IgnoredOpeningTag <-  IgnoredTagName IgnoredTagGarbage '>'  {  }
 IgnoredTagName <-  TagName &{ isIgnoredTag(yyValue) }
 IgnoredTagGarbage <-  ( !'>' _ )*
-transientIgnoredElements <-    IgnoredElementHeader    {      getState().setTagExtensionName(header._1)    }    '>' TagBody    {    }  / IgnoredElementHeader "/>"   {    }
+IgnoredElements <-    IgnoredElementHeader    {      getState().setTagExtensionName(header._1)    }    '>' TagBody    {    }  / IgnoredElementHeader "/>"   {    }
 IgnoredElementHeader <-  IgnoredElementName IgnoredTagGarbage  {  }
 IgnoredElementName <-  TagName &{ isIgnoredElement(yyValue) }
 TagExtension <-    TagHeader '>'    {      getState().setTagExtensionName(header._1)    }    TagBody
@@ -50,88 +49,85 @@ ValidClosingTag <-  "</" ClosingTagHeader &{  }  {  }
 ClosingTagHeader <-  TagName pWsStar '>'  {  }
 ValidTagName <-  TagName &{ isValidExtensionTagName(yyValue) }
 TagName <- XmlName 
-statefulTemplate <-    Braces1Plus    {      getState().setTemplateBraces(braces.length())    }    TemplateTail  / Braces1Plus    {    }
+
 Braces1Plus <- "{" "{"+ 
-transientTemplateTail <-  TemplateTailPart TemplateTailPart?  {  }
-transientTemplateTailPart <-    TemplateTailPart2 TemplateTailPart3    {    }  / TemplateTailPart2    {    }
+TemplateTail <-  TemplateTailPart TemplateTailPart?  {  }
+TemplateTailPart <-    TemplateTailPart2 TemplateTailPart3    {    }  / TemplateTailPart2    {    }
 TemplateTailPart2 <-  &{ hasAtLeastTemplateBraces(2) } TemplateNameStar TemplateArgumentStar "}}"  {  }
 TemplateTailPart3 <-  &{ hasAtLeastTemplateBraces(3) } '}'
-transientTemplateArgumentChoice <-    TemplateArgumentNamePlus '=' TemplateArgumentValueStar    {    }  / TemplateArgumentValueStar    {    }
-TemplateArgumentStar <-  args ( void '|' TemplateArgumentChoice )*  {  }
-transientSemiPreTransient <-  &{  } SemiPreLine ( &slEol SemiPreLine )*  {  }
+TemplateArgumentChoice <-    TemplateArgumentNamePlus '=' TemplateArgumentValueStar    {    }  / TemplateArgumentValueStar    {    }
+TemplateArgumentStar <-   (  '|' TemplateArgumentChoice )*  {  }
+SemiPreTransient <-  &{  } SemiPreLine ( &slEol SemiPreLine )*  {  }
 SemiPreLine SemiPreLine <-  pEol? pTpStar ' ' !OpenOrCloseMatch SemiPreContentStar  {  }
 OpenOrCloseMatch <-  pExtSpaceStar '<' '/'?    ( "div" / "hr" / "center" / "pre" / "p" / "blockquote"    / "h1" / "h2" / "h3" / "h4" / "h5" / "h6"    / "table" / "tr" / "td" / "th"    / "ul" / "ol" / "li"    )
-SemiPreContentStar <-  { }  InlineContentStar
+
 Url <- UrlProtocolString ':' UrlPathString &{ isProtocol(protocol, path) }  {  }
 UrlProtocolString <- tUrlProtocolString 
 UrlPathString <- tUrlPathString 
 tUrlProtocolString <-  [A-Za-z] [A-Za-z0-9+\-.]*
 tUrlPathString <- "TODO"
 #tUrlPathString <-  ( ![\u0000-\u0020] ![\"\[\]<>|\u007F\uE000\u2028\u2029\u0085] _ )+
-transientListTransient <-  &{ accept(ParserAtoms.LIST) } ListItem ( &slEol ListItem )*  {  }
+ListTransient <-  &{ accept(ParserAtoms.LIST) } ListItem ( &slEol ListItem )*  {  }
 ListItem <-  pEol? pTpStar ListPrefix ListItemContentStar  {  }
 ListPrefix <-    ListPrefixStr ';'?    {    }  / ';'    {    }
 ListPrefixStr <-  [*#:]+
-ListItemContentStar <-  {    enter(ParserScopes.LIST_ITEM)  }  InlineContentStar
+
 TableAttributeInlineStar <- XmlAttributeStar 
 TableTransient <-  &{ accept(ParserAtoms.TABLE) } TableBody
 BlockStopperNextTableElement <-    &{ inScope(ParserScopes.TABLE_ELEMENTS) ||       inScope(ParserScopes.TABLE_CELL) }         pExtSpaceStar [|!]
 Table TableBody <-    TableHead pEol TableContentStar pExtSpaceStar "|}"?    {    }  / TableHead Eof    {    }
-  / &ShouldNotBeHere SantiyCheckEnd {   }
+  / &ShouldNotBeHere SanityCheckEnd {   }
 TableHead <-  pExtSpaceStar "{|" TableAttributeStar pExtSpaceStar  {  }
 TableContentStar <-  { }  InlineBlockContent TableElement*  {  }
-transientTableElement <-    &TableElementPrefix ( TableCaption / TableRow / TableCell / TableHeader )  / &( TableDoneSanityCheck / ShouldNotBeHere ) SantiyCheckEnd
+TableElement <-    &TableElementPrefix ( TableCaption / TableRow / TableCell / TableHeader )  / &( TableDoneSanityCheck / ShouldNotBeHere ) SanityCheckEnd
 TableElementPrefix <-    pExtSpaceStar "|+"  / pExtSpaceStar "|-"  / pExtSpaceStar "|" !"}"  / pExtSpaceStar "!"
 TableDoneSanityCheck <-  pExtSpaceStar ( "|}" / "|" / Eof )
-grmbl <-  ListMemoized              InternalLinkMemoized      TableMemoized  ListTransient             InternalLinkTransient     TableTransient  TableCaptionMemoized      TableRowMemoized          TableHeaderMemoized  TableCaptionTransient     TableRowTransient         TableHeaderTransient  TableCellMemoized         pExtWsStarMemoized        ListMemoized  TableCellTransient        pExtWsStarTransient       ListTransient  SemiPreMemoized           SectionsMemoized          HeadingMemoized  SemiPreTransient          SectionsTransient         HeadingTransient  HorizontalRuleMemoized    ExternalLinkMemoized      ParagraphMemoized  HorizontalRuleTransient   ExternalLinkTransient     ParagraphTransient
+
 LinkTarget <-  LinkTargetString  {  }
 LinkTargetString <- "TODO"
 #LinkTargetString <-  ( ![\u0000-\u001F] ![\u007F\uFFFD<>{}|[\]] _ )+
-transientExternalLinkTransient <-    '[' &{ accept(ParserAtoms.EXTERNAL_LINK) } ExternalLinkChoice  / '['    {    }
+ExternalLinkTransient <-    '[' &{ accept(ParserAtoms.EXTERNAL_LINK) } ExternalLinkChoice  / '['    {    }
 InlineContentStopperExternalLink <-  &{ inScope(ParserScopes.EXTERNAL_LINK_TITLE) } ']'
-ExternalLinkChoice <-    pTpStar Url pExtSpacePlus title_ExternalLinkTitleContentPlus ']'    {   } / pTpStar Url pSpaceStar ']'   {    }  / &{ isWarningsEnabled() } ExternalLinkAutoCorrect
+ExternalLinkChoice <-    pTpStar Url pExtSpacePlus ExternalLinkTitleContentPlus ']'    {   } / pTpStar Url pSpaceStar ']'   {    }  / &{ isWarningsEnabled() } ExternalLinkAutoCorrect
 ExternalLinkAutoCorrect <-    &{  } pTpStar Url    {    }  / &{  } &( pTpStar Url )    {    }  / &{  }    {    }
 ExternalLinkTitleContentPlus <-  {    enter(ParserScopes.EXTERNAL_LINK_TITLE)  }  InlineContentPlus
-transientSectionsTransient <-  &{ accept(ParserAtoms.SECTIONS) } first_Section tail_Section*  {  }
+SectionsTransient <-  &{ accept(ParserAtoms.SECTIONS) } Section Section*  {  }
 InlineContentStopperHeading <-  &{ inScope(ParserScopes.SECTION_HEADING) } EqualsStr pExtSpaceStar slEolOrEof
 BlockStopperNextSection <-  &{ inScope(ParserScopes.SECTION_BODY) } Heading
-Section <-    h_Heading Eof    {_Heading SectionContentStar    {   }
-HeadingTransient <-  pTpStar open_EqualsStr heading_HeadingContentStar close_EqualsStr pExtSpaceStar &slEolOrEof  {  }
+Section <-    Heading Eof  / Heading SectionContentStar    {   }
+HeadingTransient <-  pTpStar EqualsStr HeadingContentStarEqualsStr pExtSpaceStar &slEolOrEof  {  }
 EqualsStr <- "="+ 
 HeadingContentStar <-  {    enter(ParserScopes.SECTION_HEADING)  }  InlineContentPlus
 SectionContentStar <-  {    enter(ParserScopes.SECTION_BODY)  }  BlockContent
-transientTableHeaderTransient <-    &( pExtSpaceStar '!' ) inline_TableInlineHeaderPlus last_TableBlockHeader?   {
+TableHeaderTransient <-    &( pExtSpaceStar '!' ) TableInlineHeaderPlus TableBlockHeader?   {
     }  / &( pExtSpaceStar '!' ) TableBlockHeader    {    }
 InlineContentStopperTableHeader <-  &{ inScope(ParserScopes.TABLE_INLINE_HEADER) } ( "!!" / "||" )
-AttrPossible1 <-  ( ![<|] !"[[" !"!!" !slEol _ )* ( ( '|' !'|' ) / ( '!' !'!' ) )
-InlineContentStar1 <-  {    enter(ParserScopes.TABLE_INLINE_HEADER)  }  InlineContentPlus
+
+
 BlockContentStar <-  {  }  BlockContent
-transientTableCaptionTransient <-    pExtSpaceStar "|+" Attributes InlineContentStar Garbage &FollowUpSanityCheck    {    }  / pExtSpaceStar "|+" Attributes BlockContentStar &FollowUpSanityCheck    {    }
-Garbage <-  &"||" GarbageStar end ( pEol / pEof )  {  }
+
+Garbage <-  &"||" GarbageStar ( pEol / pEof )  {  }
 GarbageStar <-  ( !( slEol pExtSpaceStar [|!] ) _ )*
 FollowUpSanityCheck <-  ExpectedFollowUp / ShouldNotBeHere
 ExpectedFollowUp <-  pExtSpaceStar ( "!" / "|+" / "|-" / "|}" / "|" / Eof )
-AttrPossible2 <-  ( ![<|] !"[[" !slEol _ )* '|' !'|'
-InlineContentStar2 <-  {    enter(ParserScopes.TABLE_INLINE_CELL)  }  InlineContentPlus
-transientHorizontalRuleTransient <-    "---" &{ accept(ParserAtoms.HORIZONTAL_RULE) } HorizontalRuleChoice  / "---"    {    }
-HorizontalRuleChoice <-    more '-'+    {    }  / &{ isWarningsEnabled() } HorizontalRuleAutoCorrect
+
+
+HorizontalRuleTransient <-    "---" &{ accept(ParserAtoms.HORIZONTAL_RULE) } HorizontalRuleChoice  / "---"    {    }
+HorizontalRuleChoice <-    '-'+    {    }  / &{ isWarningsEnabled() } HorizontalRuleAutoCorrect
 HorizontalRuleAutoCorrect <-  &{  }  {  }
 TableAttributeStar <- XmlAttributeStar 
-transientTableRowTransient <-  pExtSpaceStar "|-" TableAttributeStar TableRowBody  {  }
-TableRowBody <-    pExtSpaceStar pEol TableRowContentStar    {    }  / pExtSpaceStar Eof    {    }  / &ShouldNotBeHere SantiyCheckEnd    {    }
+TableRowTransient <-  pExtSpaceStar "|-" TableAttributeStar TableRowBody  {  }
+TableRowBody <-    pExtSpaceStar pEol TableRowContentStar    {    }  / pExtSpaceStar Eof    {    }  / &ShouldNotBeHere SanityCheckEnd    {    }
 TableRowContentStar <-  {    enter(ParserScopes.TABLE_ELEMENTS)  }  BolBlockContent TableRowElement*  {  }
-TableRowElement <-    &TableRowElementPrefix ( TableCell / TableHeader )  / &( RowDoneSanityCheck / ShouldNotBeHere ) SantiyCheckEnd
+TableRowElement <-    &TableRowElementPrefix ( TableCell / TableHeader )  / &( RowDoneSanityCheck / ShouldNotBeHere ) SanityCheckEnd
 TableRowElementPrefix <-    pExtSpaceStar "|" ![+}\-]  / pExtSpaceStar "!"
 RowDoneSanityCheck <-  pExtSpaceStar ( "|+" / "|-" / "|}" / Eof )
-#ParserEntity <-
-#  '\uE000' DecimalNumeral '\uE001'
-# {  }
 
-inlineParserEntityXmlCommentOrIgnore <-  ParserEntity &{ isXmlCommentOrIgnored(yyValue) }
+ParserEntityXmlCommentOrIgnore <-  ParserEntity &{ isXmlCommentOrIgnored(yyValue) }
 MagicWord <-    "__" MagicWordChoice  / "__"    {    }
-MagicWordChoice <-    word_Word "__"    {    }  / &{ isWarningsEnabled() } MagicWordAutoCorrect
-MagicWordAutoCorrect <-    &{ } word_Word '_'    {    }  / &{ isWarningLevelEnabled(W2S_NORMAL) } word_WordString "__"    {
-    }  / &{ isAutoCorrect(W2S_INFO) } word_Word    {    }  / &{  } &WordString    {    }
+MagicWordChoice <-    Word "__"    {    }  / &{ isWarningsEnabled() } MagicWordAutoCorrect
+MagicWordAutoCorrect <-    &{ } Word '_'    {    }  / &{ isWarningLevelEnabled(W2S_NORMAL) } WordString "__"    {
+    }  / &{ isAutoCorrect(W2S_INFO) } Word    {    }  / &{  } &WordString    {    }
 Word <-  WordString &{ isMagicWord(yyValue) }
 pSlEol        <- "\r\n"                                     / "\r"                                / "\n"
 #pSlEol        <- "\r\n"     / "\r"
@@ -166,62 +162,65 @@ pExtSpaceAtom <-    pSpacePlus    {    }  / pTransparent
 pExtWsStarTransient <-  pExtSpaceStar pExtWsAtom*  {  }
 pExtWsPlusTransient <-    pExtSpacePlus pExtWsAtom*    {    }  / pExtWsAtom+    {    }
 pExtWsAtom <-    pWsPlus    {    }  / pTransparent
-transientInternalLinkTransient <-    "[[" &{ accept(ParserAtoms.INTERNAL_LINK) } InternalLinkChoice  / "["    {    }
+InternalLinkTransient <-    "[[" &{ accept(ParserAtoms.INTERNAL_LINK) } InternalLinkChoice  / "["    {    }
 InlineContentStopperInternalLink <-    &{ inScope(ParserScopes.INTERNAL_LINK_ALT)   } ( "]]" / "[[" InternalLinkChoice / '|' )  / &{ inScope(ParserScopes.INTERNAL_LINK_TITLE) } ( "]]" / "[[" InternalLinkChoice )  / &{ inScope(ParserScopes.IMAGE_LINK_ALT)      } ( "]]" / '|' )  / &{ inScope(ParserScopes.IMAGE_LINK_TITLE)    } ( "]]" )
-statefulInternalLinkChoice <-    pTpStar LinkTargetString pExtSpaceStar    {    }    &{ isValidTarget() } options_OptionsAndTitle "]]" postfix_LinkPostfix?    {    }  / &{ isWarningsEnabled() } InternalLinkAutoCorrect
+
 InternalLinkAutoCorrect <-    &{ isAutoCorrect(W2S_INFO) }    pTpStar LinkTargetString    {    }    &{ isValidTarget() }    {    }  / &{ isWarningLevelEnabled(W2S_INFO) }    &( pTpStar LinkTargetString       {        getState().initLinkBuilder(target)       }       &{ isValidTarget() }     )    {    }  / &{  }    {    }
 NodeList OptionsAndTitle <-    &{ !isImageTarget() } LinkTitle?    {    }  / LinkOptionStar LinkTitle?
-LinkOptionStar <-  options_( '|' LinkOptionChoice )*  {  }
+LinkOptionStar <-  ( '|' LinkOptionChoice )*  {  }
 LinkOptionChoice <-    LinkOptionResize    &( '|' / "]]" )  / LinkOptionKeyword   &( '|' / "]]" )  / LinkOptionNameValue
   / LinkOptionGarbage   &'|'
 LinkOptionResize <-    pExtWsStar DigitPlus pSpaceStar "px" pExtWsStar    {    }  / pExtWsStar DigitPlus 'x' DigitPlus? pSpaceStar "px" pExtWsStar    {    }  / pExtWsStar 'x' DigitPlus pSpaceStar "px" pExtWsStar    {    }
-LinkOptionKeyword <-   pExtWsStar keyword_LinkOptionKeywordString &{ getLinkBuilder().addKeyword(keyword) } pExtWsStar  {  }
+LinkOptionKeyword <-   pExtWsStar LinkOptionKeywordString &{ getLinkBuilder().addKeyword(keyword) } pExtWsStar  {  }
 LinkOptionKeywordString <-  [A-Za-z]+
-transientLinkOptionNameValue <-    pExtWsStar "link=" LinkTargetOverride pExtWsStar    {    }  / pExtWsStar "alt="    {
+LinkOptionNameValue <-    pExtWsStar "link=" LinkTargetOverride pExtWsStar    {    }  / pExtWsStar "alt="    {
     }    LinkTitleContentStar    {    }
 LinkTargetOverride <-    Url  / LinkTarget
 LinkOptionGarbage LinkOptionGarbage <-  {    enter(isImageTarget() ?        ParserScopes.IMAGE_LINK_ALT :        ParserScopes.INTERNAL_LINK_ALT)  }  LinkTitleContentStar  {  }
-LinkTitle <-  {  }  '|' title_LinkTitleContentStar  {  }
+LinkTitle <-  {  }  '|' LinkTitleContentStar  {  }
 LinkTitleContentStar <-  InlineBlockContent
 Signature <-    "~~" SignatureChoice  / "~~"    {   }
-SignatureChoice <-   ( "~~~" / "~~" / "~" ) w_TooManyTildesWarning?    {    }  / &{ isWarningsEnabled() } SignatureAutoCorrect
+SignatureChoice <-   ( "~~~" / "~~" / "~" ) TooManyTildesWarning?    {    }  / &{ isWarningsEnabled() } SignatureAutoCorrect
 SignatureAutoCorrect <-  &{  }  {  }
 TooManyTildesWarning <-  &{  } &'~'+  { }
 BolBlockContent <-  Block*  {  }
-BlockContent <-  head_Paragraph tail_Block*  {  }
+BlockContent <-  Paragraph Block*  {  }
 Block <-  !BlockStopper ( LineStartProd / Paragraph )
 BlockStopper <-    BlockStopperNextSection  / BlockStopperNextTableElement
-transientLineStartProd <-    &( pExtSpaceStar "{|"  ) Table  / &( pTpStar       "---" ) HorizontalRule  / &( pTpStar       [*#:] ) List  / &( pTpStar       [ ]   ) SemiPre  / &( pTpStar       [=]   ) Sections
-transientParagraphTransient <-    pre_PreParaWs !ParagraphStopper p_ParagraphText post_PostParaWs?    {    }  / PreParaWs  / p_ParagraphText post_PostParaWs?    {    }
+LineStartProd <-    &( pExtSpaceStar "{|"  ) Table  / &( pTpStar       "---" ) HorizontalRule  / &( pTpStar       [*#:] ) List  / &( pTpStar       [ ]   ) SemiPre  / &( pTpStar       [=]   ) Sections
+
+
+
+#ParagraphTransient <-    PreParaWs !ParagraphStopper ParagraphText PostParaWs?    {    }  / PreParaWs  / ParagraphText PostParaWs?    {    }
 ParagraphStopper <-    LineStartProd  / BlockStopper
-PreParaWs <-  s_pExtSpaceStar lt_pEol tail_PreParaWsMore* {  }
-PreParaWsMore <-  !ParagraphStopper s_pExtSpaceStar lt_pEol  {  }
-transientParagraphText <-  head_InlineContentPlus tail_ParagraphTextMore*  {  }
-ParagraphTextMore <-  lt_pEol !ParagraphStopper pExtSpaceStar InlineContentPlus  {  }
+PreParaWs <-  pExtSpaceStar pEol PreParaWsMore* {  }
+PreParaWsMore <-  !ParagraphStopper pExtSpaceStar pEol  {  }
+ParagraphText <-  InlineContentPlus ParagraphTextMore*  {  }
+ParagraphTextMore <-  pEol !ParagraphStopper pExtSpaceStar InlineContentPlus  {  }
 PostParaWs <-  pEol PostParaWsMore*  {  }
-PostParaWsMore <-  !ParagraphStopper s_pExtSpaceStar lt_pEol  {   }
-InlineBlockContent <- ( !BlockStopper InlineTextBlock )? tail_InlineBlock* { }
+PostParaWsMore <-  !ParagraphStopper pExtSpaceStar pEol  {   }
+InlineBlockContent <- ( !BlockStopper InlineTextBlock )? InlineBlock* { }
 InlineBlock <-  !BlockStopper ( LineStartProd / InlineTextBlock )
-transientInlineTextBlock <-    head_InlineContentPlus tail_InlineTextBlockMore*    {    } / tail_InlineTextBlockMore+    { }
+InlineTextBlock <-    InlineContentPlus InlineTextBlockMore*    {    } / InlineTextBlockMore+    { }
 InlineTextBlockMore <-     pEol ( !ParagraphStopper InlineContentPlus )?  {  }
-InlineContentStar3 <-  InlineContentChoice*  {  }
+
 InlineContentPlus <-  InlineContentChoice+  { }
-transientInlineContentChoice <-    TextPlus ':' UrlPathString     {    }  / TextPlus &"[[" !InlineContentStopper InternalLink    {    }  / TextPlus  / !InlineContentStopper InlineContentAtom  / !InlineContentStopper TextStopperPrefix    {    }
+InlineContentChoice <-    TextPlus ':' UrlPathString     {    }  / TextPlus &"[[" !InlineContentStopper InternalLink    {    }  / TextPlus  / !InlineContentStopper InlineContentAtom  / !InlineContentStopper TextStopperPrefix    {    }
 InlineContentAtom <-    &"~~"     Signature  / &"[["     InternalLink  / &"["      ExternalLink  / &"''"     Ticks  / &"__"     MagicWord  / &"<"      XmlElement  / &"&"      XmlReference  #/ &"\uE000" ParserEntity
 InlineContentStopper <-    slEol  / InlineContentStopperExternalLink  / InlineContentStopperInternalLink  / InlineContentStopperHeading  / InlineContentStopperTableHeader  / InlineContentStopperTableCell
 TextPlus <-  TextPlusStr  {  }
 TextPlusStr <- ( !TextStopperPrefix _ )+ 
 TextStopperPrefix <-    pSlEol  / "="     / "|"               / "!"    / "]"     / ":"     / ":"               / "~~"             / "["               / "''"              / "__"              / "<"               / "&"               #/ "\uE000"        
-XmlElementClose <-    XmlName pWsStar '>'    {    }
-XmlElementOpen <-    XmlName AttributeStar pWsStar "/>"    {    }  / XmlName AttributeStar pWsStar '>'    {    }
+#XmlElementClose <-    XmlName pWsStar '>'    {    }
+#XmlElementOpen <-    XmlName AttributeStar pWsStar "/>"    {    }  / XmlName AttributeStar pWsStar '>'    {    }
 AttributeStar <-  (&pWsPlus XmlAttributePlus)?  {  }
-transientTableCellTransient <-    &( pExtSpaceStar '|' ) inline_TableInlineCellPlus last_TableBlockCell?    {    }  / &( pExtSpaceStar '|' ) TableBlockCell    {    }
+#TableCellTransient <-    &( pExtSpaceStar '|' ) TableInlineCellPlus TableBlockCell?    {    }  / &( pExtSpaceStar '|' ) TableBlockCell    {    }
 InlineContentStopperTableCell <- &{ inScope(ParserScopes.TABLE_INLINE_CELL) } "||"
 TableInlineCellPlus <-  ( TableInlineCell &"||" )+  {  }
-TableInlineCell <-  pExtSpaceStar ( "||" / "|" ) Attributes InlineContentStar  {  }
+
 TableBlockCell <-  pExtSpaceStar ( "||" / "|" ) Attributes BlockContentStar &FollowUpSanityCheck  {  }
-AttrPossible3 <-  ( ![<|] !"[[" !slEol _ )* '|' !'|'
-InlineContentStar4 <-  {    enter(ParserScopes.TABLE_INLINE_CELL)  }  InlineContentPlus
+
+
 XmlAttributeStar <-  tXmlAttributePlus?  {      }
 XmlAttributePlus <- tXmlAttributePlus 
 XmlAttrGarbageStopper <-    <SlashGreater> "/>"  / <Greater>      '>'  / <Less>         '<'
@@ -244,21 +243,21 @@ ValueDqString <-  ( !XmlAttrValueStopper ![<\"&] _ )+
 ValueNqStar <-  ValueNqChoice*  {  }
 ValueNqChoice <-    ValueNqString    {  }  / &'&' XmlReference
 ValueNqString <-  ( !XmlAttrValueStopper [a-zA-Z0-9!#$%()*,\-./:;<?@[\]^_`{|}~] )+
-IntegerLiteral <- HexNumeral / OctalNumeral / DecimalNumeral 
-HexNumeral     <- '0' [xX] HexDigitPlus 
-OctalNumeral   <- '0' OctalDigit+ 
+#IntegerLiteral <- HexNumeral / OctalNumeral / DecimalNumeral 
+#HexNumeral     <- '0' [xX] HexDigitPlus 
+#OctalNumeral   <- '0' OctalDigit+ 
 DecimalNumeral <- '0' / NonZeroDigit DigitStar 
 DigitStar      <- Digit* 
 DigitPlus      <- Digit+ 
-HexDigitStar   <- HexDigit* 
+#HexDigitStar   <- HexDigit* 
 HexDigitPlus   <- HexDigit+ 
-HexQuad        <- HexDigit HexDigit HexDigit HexDigit 
+#HexQuad        <- HexDigit HexDigit HexDigit HexDigit 
 HexDigit       <- [0-9a-fA-F] 
-OctalDigit     <- [0-7] 
+#OctalDigit     <- [0-7] 
 NonZeroDigit   <- [1-9] 
 Digit          <- [0-9] 
-inlineSantiyCheckEnd <-  { } &{  } 
-inlineSantiyCheckAccept <- { yyValue = null; } 
+#SanityCheckEnd <-  { } &{  } 
+#SanityCheckAccept <- { yyValue = null; } 
 ShouldNotBeHere <- ThrowShouldNotBeHereException 
 ThrowShouldNotBeHereException <-  ErrorContextString  {  }
 ErrorContextString <-  (_(_(_(_(_(_(_(_(_(_(_(_(_(_(_(_)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?
@@ -280,13 +279,17 @@ pEol          <- "\r\n"  / "\r"  / "\n"
 #                                / "\u000C"
 #                                / "\u0085" 
 pEof          <- !_ 
-pEolOrEof     <- pEol / pEof 
-SpaceStar        <- Space* 
-SpacePlus        <- Space+ 
-Space            <- ' '  / '\t'    / '\f' 
-WsStar           <- Ws* 
-WsPlus           <- Ws+ 
-Ws               <- Space      / Eol 
+#pEolOrEof     <- pEol / pEof 
+#SpaceStar        <- Space* 
+#SpacePlus        <- Space+ 
+#Space            <- ' '  / '\t'    / '\f' 
+#WsStar           <- Ws* 
+#pWsPlus           <- Ws+ 
+#Ws               <- Space      / Eol
+
+#wikitext/lazy/parser/Whitespace.rats:          void    Eol          := <DUMMY> &{ acceptEol() } slEol ;
+#Eol          <- slEol
+ 
 XmlName <- tXmlName 
 tXmlName <- XmlNameStartChar XmlNameChar* 
 XmlNameStartChar <-
@@ -308,8 +311,6 @@ XmlNameChar <-
 #  / [\u00B7]
 #  / [\u0300-\u036F]
 #  / [\u203F-\u2040]
-ContentStringStopper3 <-ContentStringStopper    <PrefixOnlyInclude>    ...  / <PrefixPipe>           '|'  / <PrefixClosingBraces>  "}}"
-ContentStringStopper4 <-			   ContentStringStopper    <PrefixOnlyInclude>    ...  / <PrefixClosingBraces>  "]]"
 
 
 TableInlineHeaderPlus <-
@@ -317,21 +318,13 @@ TableInlineHeaderPlus <-
   {
   }
 
-TableInlineHeader <-
-  pExtSpaceStar ( "!!" / "||" / "!" ) Attributes InlineContentStar
-  {
-  }
+
 TableBlockHeader <-
   pExtSpaceStar ( "!!" / "||" / "!" ) Attributes BlockContentStar &FollowUpSanityCheck
   {
   }
 
-AttrPossible4 <-
-  ( ![<|] !"[[" !"!!" !slEol _ )* ( ( '|' !'|' ) / ( '!' !'!' ) )
-InlineContentStar5 <-
-  {
-  }
-  InlineContentPlus
+
 
 Attributes <-
     &AttrPossible TableAttributeInlineStar pExtSpaceStar '|' !'|'
@@ -340,13 +333,9 @@ Attributes <-
   / {
     }
 
-AttrPossible5 <-
-  ( ![<|] !"[[" !slEol _ )* '|' !'|'
-
-InlineContentStar6 <-  {  }  InlineContentPlus
 
 Ticks Ticks <-
-  "''" ticks_'\''*
+  "''" '\''*
   {
   }
 
@@ -372,391 +361,127 @@ WordString <-
   # / [\u203F-\u2040]
   )+
 
+#Todo rename the inline content stars with the right stuff
+InlineContentStar <-  {    enter(ParserScopes.TABLE_INLINE_HEADER)  }  InlineContentPlus
+#InlineContentStar2 <-  {    enter(ParserScopes.TABLE_INLINE_CELL)  }  InlineContentPlus
+#InlineContentStar3 <-  InlineContentChoice*  {  }
+#InlineContentStar4 <-  {    enter(ParserScopes.TABLE_INLINE_CELL)  }  InlineContentPlus
+#InlineContentStar5 <-  {  }  InlineContentPlus
+
+SemiPreContentStar <-  { }  InlineContentStar
+ListItemContentStar <-  {    enter(ParserScopes.LIST_ITEM)  }  InlineContentStar
+#transientTableCaptionTransient <-    pExtSpaceStar "|+" Attributes InlineContentStar Garbage &FollowUpSanityCheck    {    }  / pExtSpaceStar "|+" Attributes BlockContentStar &FollowUpSanityCheck    {    }
+TableInlineCell <-  pExtSpaceStar ( "||" / "|" ) Attributes InlineContentStar  {  }
+TableInlineHeader <-  pExtSpaceStar ( "!!" / "||" / "!" ) Attributes InlineContentStar  {  }
 
 
-#TODO removing stuff 
- BlockContent <-
-  head_Paragraph tail_Block*
-  {
-    yyValue = new NodeList(head, tail)
-  }
-Block <-
-  !BlockStopper ( LineStartProd / Paragraph )
- BlockStopper <-
-    BlockStopperNextSection
-  / BlockStopperNextTableElement
-transientLineStartProd <-
-    &( pExtSpaceStar "{|"  ) Table
-  / &( pTpStar       "---" ) HorizontalRule
-  / &( pTpStar       [*#:] ) List
-  / &( pTpStar       [ ]   ) SemiPre
-  / &( pTpStar       [=]   ) Sections
 
- transientParagraphTransient <-
-    PreParaWs !ParagraphStopper ParagraphText PostParaWs?
-    {
-    }
-  / PreParaWs
-  / ParagraphText PostParaWs?
-    {
-    }
- ParagraphStopper <-
-    LineStartProd
-  / BlockStopper
-PreParaWs <-
-  pExtSpaceStar pEol PreParaWsMore*
-  {
-  }
-PreParaWsMore <-
-  !ParagraphStopper pExtSpaceStar pEol
-  {
-  }
-transientParagraphText <-
-  InlineContentPlus ParagraphTextMore*
-  {
-  }
-ParagraphTextMore <-
-  pEol !ParagraphStopper pExtSpaceStar InlineContentPlus
-  {
-  }
- PostParaWs <-
-  pEol PostParaWsMore*
-  {
-  }
- PostParaWsMore <-
-  !ParagraphStopper pExtSpaceStar pEol
-  {
-  }
- InlineBlockContent <-
-  ( !BlockStopper InlineTextBlock )? InlineBlock*
-  {
-  }
-InlineBlock <-
-  !BlockStopper ( LineStartProd / InlineTextBlock )
-transientInlineTextBlock <-
-    InlineContentPlus InlineTextBlockMore*
-    {
-    }
-  / InlineTextBlockMore+
-    {
-    }
-InlineTextBlockMore <-
-  pEol ( !ParagraphStopper InlineContentPlus )?
-  {
-  }
-InlineContentStar7 <-
-  InlineContentChoice*
-  {
-  }
-InlineContentPlus <-
-  InlineContentChoice+
-  {
-  }
-transientInlineContentChoice <-
-    TextPlus ':' &{ accept(ParserAtoms.PLAIN_EXTERNAL_LINK) } UrlPathString &{ isProtocol(text, path) }
-    {
-    }
-  / text_TextPlus &"[[" !InlineContentStopper InternalLink
-    {
-    }
-  / TextPlus
-  / !InlineContentStopper InlineContentAtom
-  / !InlineContentStopper text_TextStopperPrefix
-    {
-      yyValue = new Text(text)
-    }
-InlineContentAtom <-
-    &"~~"     Signature
-  / &"[["     InternalLink
-  / &"["      ExternalLink
-  / &"''"     Ticks
-  / &"__"     MagicWord
-  / &"<"      XmlElement
-  / &"&"      XmlReference
-#  / &"\uE000" ParserEntity
- InlineContentStopper <-
-    slEol
-  / InlineContentStopperExternalLink
-  / InlineContentStopperInternalLink
-  / InlineContentStopperHeading
-  / InlineContentStopperTableHeader
-  / InlineContentStopperTableCell
-TextPlus <-
-  text_TextPlusStr
-  {
-    yyValue = new Text(text)
-  }
-TextPlusStr <- ( !TextStopperPrefix _ )+ 
-TextStopperPrefix <-
-    pSlEol        #  // block level end (lists, semi pre)
-                  #  // heading abort
-                  #  // external link title abort
-                  #  // table element start
-                  #  // table cell/header inline element end
-  / "="           #  // heading end
-  / "|"           #  // internal link parameter end
-                  #  // table cell inline element end
-  / "!"           #  // table header inline element end
-  / "]"           #  // external and internal link title end
-  / ":"           #  // Definition list definition (in the pair TERM:DEF)
-  #// -- content atom prefix --
-  / ":"           #  // plain url
-  / "~~"          #  // signature
-  / "["           #  // internal or external link
-  / "''"          #  // bold or italic
-  / "__"          #  // magic word
-  / "<"           #  // xml tag and comment
-  / "&"           #  // xml entity
-#  / "\uE000"        // parser entity
+AttrPossible <-  ( ![<|] !"[[" !"!!" !slEol _ )* ( ( '|' !'|' ) / ( '!' !'!' ) )
+#AttrPossible2 <-  ( ![<|] !"[[" !slEol _ )* '|' !'|'
+#AttrPossible3 <-  ( ![<|] !"[[" !slEol _ )* '|' !'|'
+#AttrPossible4 <-  ( ![<|] !"[[" !"!!" !slEol _ )* ( ( '|' !'|' ) / ( '!' !'!' ) )
+#AttrPossible5 <-  ( ![<|] !"[[" !slEol _ )* '|' !'|'
 
-XmlElementClose <-
-    XmlName pWsStar '>'
-    {
-    }
-XmlElementOpen <-
-    XmlName AttributeStar pWsStar "/>"
-    {
-    }
-  / XmlName AttributeStar pWsStar '>'
-    {
-    }
- NodeList AttributeStar <-
-  (&pWsPlus XmlAttributePlus)?
-  {
-  }
- transientTableCellTransient <-
-    &( pExtSpaceStar '|' ) TableInlineCellPlus TableBlockCell?
-    {
-    }
-  / &( pExtSpaceStar '|' ) TableBlockCell
-    {
-    }
-InlineContentStopperTableCell <-
-  &{ inScope(ParserScopes.TABLE_INLINE_CELL) } "||"
-TableInlineCellPlus <-
-  ( TableInlineCell &"||" )+
-  {
-  }
- TableCell TableInlineCell <-
-  pExtSpaceStar ( "||" / "|" ) Attributes InlineContentStar
-  {
-  }
-TableBlockCell <-
-  pExtSpaceStar ( "||" / "|" ) Attributes BlockContentStar &FollowUpSanityCheck
-  {
-  }
 
-AttrPossible6 <-
-  ( ![<|] !"[[" !slEol _ )* '|' !'|'
-InlineContentStar8 <-
-  {
-    enter(ParserScopes.TABLE_INLINE_CELL)
-  }
-  InlineContentPlus
 
-XmlAttributeStar <-
-  tXmlAttributePlus?
-  {
-  }
-XmlAttributePlus <- tXmlAttributePlus 
-XmlAttrGarbageStopper <-
-    <SlashGreater> "/>"
-  / <Greater>      '>'
-  / <Less>         '<'
-XmlAttrValueStopper <-
-    <SlashGreater> "/>"
-  / <Greater>      '>'
-  / <Less>         '<'
- XmlAttrWs <-
-    <Whitespace>   pWsPlus
+ContentStringStopper <-   <PrefixOnlyInclude>    ...  / <PrefixPipe>           '|'  / <PrefixEquals>         '='  / <PrefixClosingBraces>  "}}"
+#TODO:ContentStringStopperOpen <- <PrefixOnlyInclude> '<'   / <PrefixXmlElement>  '<'  / <PrefixTemplate>    "{{"  / <PrefixIntLink>     "[["
+#TODO:ContentStringStopperCloseBrace <- ContentStringStopper    <PrefixOnlyInclude>    ...  / <PrefixClosingBraces>  "]]"
 
-#// -- Attributes ---------------------------------------------------------------
-tXmlAttributePlus <-
-	head_XmlHeadAttributeChoice tail_XmlTailAttributeChoice*
-  {
-  }
-XmlHeadAttributeChoice <-
-    ValidXmlAttribute
-  / XmlAttributeGarbage
-XmlTailAttributeChoice <-
-    &XmlAttrWs ValidXmlAttribute
-  / XmlAttributeGarbage
- XmlAttributeGarbage XmlAttributeGarbage <-
-  GarbageString
-  {
-  }
-GarbageString <-
-  ( !GarbageStringStopper _ )+
- void GarbageStringStopper <-
-    XmlAttrWs? XmlAttrGarbageStopper
-  / XmlAttrWs ValidXmlAttribute
-ValidXmlAttribute <-
-    XmlAttrWs? XmlName XmlAttrWs? '=' XmlAttrWs? ['] ValueSqStar ['] &AttrEnd
-    {
-    }
-  / XmlAttrWs? XmlName XmlAttrWs? '=' XmlAttrWs? '"' ValueDqStar '"' &AttrEnd
-    {
-    }
-  / XmlAttrWs? XmlName  XmlAttrWs? '=' ValueNqStar &AttrEnd
-    {
-    }
-  / XmlAttrWs? XmlName &AttrEnd
-    {
-    }
- void AttrEnd <-
-    XmlAttrWs
-  / XmlAttrValueStopper
-  / Eof
 
-#// -- Single quoted attribute values -------------------------------------------
- ValueSqStar <-
-  ValueSqChoice*
-  {
-  }
-ValueSqChoice <-
-    ValueSqString
-    {
-    }
-  / &'&' XmlReference
-ValueSqString <-
-  ( !XmlAttrValueStopper ![<'&] _ )+
+ParserEntity <-DecimalNumeral
+# TODO  ParserEntity <- '\uE000' DecimalNumeral '\uE001'
 
-#// -- Double quoted attribute values -------------------------------------------
-ValueDqStar <-
-  ValueDqChoice*
-  {
-  }
-ValueDqChoice <-
-    ValueDqString
-    {
-    }
-  / &'&' XmlReference
-ValueDqString <-
-  ( !XmlAttrValueStopper ![<"&] _ )+
+Less<- 
+PrefixClosingBraces<- 
+PrefixEquals<- 
+PrefixPipe<- 
+PrefixOnlyInclude<- 
+Whitespace<- 
+SlashGreater<- 
+Heading<- 
+# not defined at all
+ExternalLink<-
 
-#// -- Non-quoted attribute values ----------------------------------------------
-ValueNqStar <-
-  ValueNqChoice*
-  {
-  }
-ValueNqChoice <-
-    ValueNqString
-    {
-    }
-  / &'&' XmlReference
-ValueNqString <-
-  ( !XmlAttrValueStopper [a-zA-Z0-9!#$%()*,\-./:;<?@[\]^_`{|}~] )+
 
- IntegerLiteral <- HexNumeral / OctalNumeral / DecimalNumeral 
- HexNumeral     <- '0' [xX] HexDigitPlus 
- OctalNumeral   <- '0' OctalDigit+ 
- DecimalNumeral <- '0' / NonZeroDigit DigitStar 
- DigitStar      <- Digit* 
- DigitPlus      <- Digit+ 
- HexDigitStar   <- HexDigit* 
- HexDigitPlus   <- HexDigit+ 
-HexQuad        <- HexDigit HexDigit HexDigit HexDigit 
-HexDigit       <- [0-9a-fA-F] 
-OctalDigit     <- [0-7] 
-NonZeroDigit   <- [1-9] 
-Digit          <- [0-9] 
+#PrefixIntLink <- "TODO"
+#PrefixTemplate <- "TODO"
+#PrefixXmlElement<- "TODO"
+#TableRowMemoized<- "TODO"
+# ExternalLinkMemoized<- "TODO"
+# Heading<- "TODO"
+ HeadingContentStarEqualsStr<- "TODO"
+# HeadingMemoized<- "TODO"
+# HorizontalRuleMemoized<- "TODO"
+IgnoredClosingTag<- "TODO"
+IntLink<- "TODO"
+# InternalLinkMemoized<- "TODO"
+# ParagraphMemoized<- "TODO"
+SanityCheckEnd<- "TODO"
+# SectionsMemoized<- "TODO"
+SemiPre<- "TODO"
+# SemiPreMemoized<- "TODO"
+Table<- "TODO"
+# TableCaptionMemoized<- "TODO"
+# TableCaptionTransient<- "TODO"
+# TableCellMemoized<- "TODO"
+# TableHeaderMemoized<- "TODO"
+# TableMemoized<- "TODO"
 
-inlineSantiyCheckEnd <- { yyValue = null; } &{ returnFalse() } 
-inlineSantiyCheckAccept <- { yyValue = null; } 
-ShouldNotBeHere <- ThrowShouldNotBeHereException 
-ThrowShouldNotBeHereException <-
-  ErrorContextString
-  {
-    throwShouldNotBeHereException(yyStart, context)
-  }
-ErrorContextString <-
-  (_(_(_(_(_(_(_(_(_(_(_(_(_(_(_(_)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?)?
-AstNode XmlReference <-
-    '&' XmlReferenceChoice
-  / '&'
-    {
-      yyValue = new Text("&")
-    }
-XmlReferenceChoice <-
-    "#" XmlCharRefChoice
-  /     XmlEntityRefChoice
-  / &{ isWarningsEnabled() }
-        XmlReferenceAutoCorrect
-XmlReferenceAutoCorrect <-
-  &{  } 
-  {
-  }
-XmlCharRefChoice <-
-    'x' ch_HexDigitPlus ';'
-    {
-    }
-  / ch_DigitPlus ';'
-    {
-    }
-XmlEntityRefChoice <-
-    XmlName ';'
-    {
-    }
- pSpaceStar     <- pSpace* 
- pSpacePlus     <- pSpace+ 
- pSpace         <- ' '
-                                / '\t'
-                                / '\f' 
- pWsStar       <- pWhitespace* 
-  pWsPlus       <- pWhitespace+ 
- pWhitespace   <- pSpace
-                                / pEol 
-  pEol          <- "\r\n"
-                                / "\r"
-                                / "\n"
-                                # / "\u2028"
-                                # / "\u2029"
-                                # / "\u000B"
-                                # / "\u000C"
-                                # / "\u0085" 
-#// -- Preserved End of File ----------------------------------------------------
-pEof          <- !_ 
- pEolOrEof     <- pEol / pEof 
-#// -- Space predicates  --------------------------------------------------------
-SpaceStar        <- Space* 
-SpacePlus        <- Space+ 
-Space            <- ' '
-                                / '\t'
-                                / '\f' 
-#// -- Whitespace predicates  ---------------------------------------------------
- WsStar           <- Ws* 
- WsPlus           <- Ws+ 
-   Ws               <- Space
-                                / Eol 
-   Eol              <-  "\r\n"
-                                / '\r'
-                                / '\n'
-                                # / '\u2028'
-                                # / '\u2029'
-                                # / '\u000B'
-                                # / '\u000C'
-                                # / '\u0085' 
- Eof              <- !_ 
- EolOrEof         <- Eol
-                                / Eof 
-XmlName <- tXmlName 
-tXmlName <- XmlNameStartChar XmlNameChar* 
-XmlNameStartChar <-
-    [A-Za-z:_]
-  # / [\u00C0-\u00D6]
-  # / [\u00D8-\u00F6]
-  # / [\u00F8-\u02FF]
-  # / [\u0370-\u037D]
-  # / [\u037F-\u1FFF]
-  # / [\u200C-\u200D]
-  # / [\u2070-\u218F]
-  # / [\u2C00-\u2FEF]
-  # / [\u3001-\uD7FF]
-  # / [\uF900-\uFDCF]
-  # / [\uFDF0-\uFFFD]
-XmlNameChar <-
-    XmlNameStartChar
-  / [0-9\-.]
-  # / [\u00B7]
-  # / [\u0300-\u036F]
-  # / [\u203F-\u2040]
+
+
+
+Text<- "TODO"
+XmlCommentContent<- "TODO"
+# todo another funky
+## These rules are defined in java...
+#LinkPostfix <- 
+#ListMemoized <-
+#pExtWsStarMemoized <-
+Eof<- 
+HorizontalRule<- 
+InternalLinkChoice<- 
+List <-  
+NodeList<- 
+Paragraph<-
+Sections<- 
+TableCaption<-
+TableCell<- 
+TableHeader<- 
+TableRow<-
+Template<- "TODO"
+pExtWsStar <- 
+
+_ <- # TODO
+## not used, yet
+#statefulInternalLinkChoice <-    pTpStar LinkTargetString pExtSpaceStar    {    }    &{ isValidTarget() } OptionsAndTitle "]]" LinkPostfix?    {    }  / &{ isWarningsEnabled() } InternalLinkAutoCorrect
+
+#grmbl <-  ListMemoized              InternalLinkMemoized      TableMemoized  ListTransient             InternalLinkTransient     TableTransient  TableCaptionMemoized      TableRowMemoized          TableHeaderMemoized  TableCaptionTransient     TableRowTransient         TableHeaderTransient  TableCellMemoized         pExtWsStarMemoized        ListMemoized  TableCellTransient        pExtWsStarTransient       ListTransient  SemiPreMemoized           SectionsMemoized          HeadingMemoized  SemiPreTransient          SectionsTransient         HeadingTransient  HorizontalRuleMemoized    ExternalLinkMemoized      ParagraphMemoized  HorizontalRuleTransient   ExternalLinkTransient     ParagraphTransient
+#statefulTemplate <-    Braces1Plus    {      getState().setTemplateBraces(braces.length())    }    TemplateTail  / Braces1Plus    {    }
+
+
+# rule 'TableBlockCell' defined but not used
+# rule 'TableInlineCellPlus' defined but not used
+# rule 'AttributeStar' defined but not used
+# rule 'PostParaWs' defined but not used
+# rule 'ParagraphText' defined but not used
+# rule 'PreParaWs' defined but not used
+# rule 'OptionsAndTitle' defined but not used
+# rule 'InternalLinkAutoCorrect' defined but not used
+# rule 'InternalLinkTransient' defined but not used
+# rule 'pExtWsPlusTransient' defined but not used
+# rule 'pExtWsStarTransient' defined but not used
+# rule 'pTpPlus' defined but not used
+# rule 'TableRowTransient' defined but not used
+# rule 'HorizontalRuleTransient' defined but not used
+# rule 'Garbage' defined but not used
+# rule 'TableHeaderTransient' defined but not used
+# rule 'HeadingContentStar' defined but not used
+# rule 'HeadingTransient' defined but not used
+# rule 'SectionsTransient' defined but not used
+# rule 'ExternalLinkTransient' defined but not used
+# rule 'TableTransient' defined but not used
+# rule 'ListTransient' defined but not used
+# rule 'SemiPreTransient' defined but not used
+# rule 'TemplateTail' defined but not used
+# rule 'Braces1Plus' defined but not used
